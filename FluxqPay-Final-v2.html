@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#4f8ef7"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FluxqPay"/>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRmx1eHFQYXkgLSBSZWNoYXJnZSBBcHAiLCJzaG9ydF9uYW1lIjoiRmx1eHFQYXkiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMDYwNjEwIiwidGhlbWVfY29sb3IiOiIjNGY4ZWY3In0="/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%234f8ef7'/><text x='50%' y='56%' font-size='100' text-anchor='middle' dominant-baseline='middle'>⚡</text></svg>"/>
+<title>FluxqPay — Recharge App</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Clash+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#060610;--s1:#0e0e1c;--s2:#16162a;--s3:#1e1e36;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --blue:#4f8ef7;--purple:#9b6dff;--green:#22d3a5;--orange:#ff8c42;--red:#ff5c5c;
+  --text:#e8e8f4;--muted:#6b6b8a;--muted2:#9090aa;--r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.glow::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(79,142,247,.1),transparent 70%);top:-150px;left:-100px;}
+.glow::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(155,109,255,.08),transparent 70%);bottom:-100px;right:-80px;}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;}
+#splash.hide{opacity:0;pointer-events:none;}
+.splash-logo{font-family:'Clash Display',sans-serif;font-size:42px;font-weight:700;margin-top:16px;}
+.splash-logo em{color:var(--blue);font-style:normal;}
+.splash-tag{color:var(--muted2);font-size:14px;margin-top:8px;}
+.splash-bolt{font-size:64px;animation:pulse 1.2s ease infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.splash-bar{width:160px;height:3px;background:var(--s3);border-radius:99px;margin-top:32px;overflow:hidden;}
+.splash-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;animation:fill 1.8s ease forwards;}
+@keyframes fill{from{width:0}to{width:100%}}
+
+/* INSTALL BANNER */
+#install-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;
+  background:linear-gradient(135deg,var(--s2),var(--s3));border-top:1px solid var(--border2);
+  padding:14px 16px;flex-direction:row;align-items:center;gap:12px;box-shadow:0 -8px 32px rgba(0,0,0,.4);}
+#install-banner.show{display:flex;}
+.inst-ico{font-size:28px;flex-shrink:0;}
+.inst-text{flex:1;}
+.inst-text strong{display:block;font-size:14px;font-weight:700;}
+.inst-text span{font-size:12px;color:var(--muted2);}
+.btn-inst{background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:10px;
+  padding:10px 18px;color:#fff;font-family:'Clash Display',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-inst-x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
+
+#offline-badge{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  z-index:600;background:var(--red);color:#fff;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;}
+#offline-badge.show{display:block;}
+.hidden{display:none!important;}
+
+/* ══ REGISTER ══ */
+#view-register,#view-otp{min-height:100vh;display:flex;align-items:center;
+  justify-content:center;padding:24px;position:relative;z-index:1;}
+.reg-card{background:var(--s2);border:1px solid var(--border2);border-radius:24px;
+  padding:36px 28px;width:100%;max-width:380px;text-align:center;}
+.reg-logo{font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px;}
+.reg-logo em{color:var(--blue);font-style:normal;}
+.reg-sub{font-size:13px;color:var(--muted2);margin-bottom:28px;}
+.reg-ico{font-size:52px;margin-bottom:12px;}
+.reg-title{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;}
+.reg-desc{font-size:13px;color:var(--muted2);margin-bottom:24px;line-height:1.6;}
+.field{margin-bottom:14px;text-align:left;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.field input{width:100%;background:var(--s1);border:1.5px solid var(--border);border-radius:10px;
+  padding:13px 14px;color:var(--text);font-family:inherit;font-size:16px;outline:none;transition:.2s;}
+.field input:focus{border-color:var(--blue);}
+.field .hint{font-size:11px;color:var(--muted);margin-top:5px;}
+.btn-main{width:100%;padding:15px;border:none;border-radius:12px;cursor:pointer;
+  font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;
+  background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;
+  box-shadow:0 4px 20px rgba(79,142,247,.3);transition:all .2s;margin-top:6px;}
+.btn-main:hover{transform:translateY(-2px);}
+.btn-main:active{transform:scale(.97);}
+.err-msg{color:var(--red);font-size:12px;margin-top:8px;}
+.suc-msg{color:var(--green);font-size:12px;margin-top:8px;}
+
+/* OTP */
+.otp-row{display:flex;gap:10px;justify-content:center;margin:16px 0;}
+.otp-box{width:50px;height:54px;background:var(--s1);border:1.5px solid var(--border);
+  border-radius:10px;font-size:22px;font-weight:700;text-align:center;color:var(--text);
+  font-family:'Clash Display',sans-serif;outline:none;transition:.2s;}
+.otp-box:focus{border-color:var(--blue);}
+.otp-demo{background:rgba(79,142,247,.08);border:1px dashed rgba(79,142,247,.3);
+  border-radius:10px;padding:12px 16px;margin-top:12px;font-size:12px;color:var(--muted2);text-align:center;}
+.otp-demo strong{display:block;font-size:24px;letter-spacing:6px;color:var(--text);margin:6px 0 2px;
+  font-family:'Clash Display',sans-serif;}
+.resend-row{font-size:12px;color:var(--muted);margin-top:12px;}
+.resend-lnk{color:var(--blue);cursor:pointer;font-weight:600;}
+.resend-lnk.off{color:var(--muted);cursor:not-allowed;}
+.back-lnk{font-size:12px;color:var(--muted);cursor:pointer;margin-top:14px;display:block;}
+.back-lnk:hover{color:var(--blue);}
+
+/* ══ APP WRAP ══ */
+.wrap{position:relative;z-index:1;max-width:460px;margin:0 auto;padding:16px 15px 100px;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 0 18px;}
+.logo{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;}
+.logo em{color:var(--blue);font-style:normal;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+.hdr-lbl{font-size:11px;color:var(--muted2);}
+.admin-btn{background:var(--s2);border:1px solid var(--border2);border-radius:8px;
+  padding:6px 12px;font-size:11px;font-weight:600;color:var(--muted2);cursor:pointer;}
+
+/* user chip */
+.user-chip{background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+.uc-left{display:flex;align-items:center;gap:10px;}
+.uc-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.uc-name{font-size:13px;font-weight:600;}
+.uc-num{font-size:11px;color:var(--muted2);}
+.btn-lo-u{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;}
+.btn-lo-u:hover{color:var(--red);}
+
+/* services */
+.svc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.svc{background:var(--s2);border:1.5px solid var(--border);border-radius:var(--r);
+  padding:16px 8px 14px;cursor:pointer;transition:all .2s;text-align:center;}
+.svc:active{transform:scale(.96);}
+.svc.on{border-color:var(--blue);background:linear-gradient(150deg,rgba(79,142,247,.14),rgba(155,109,255,.06));}
+.svc-ico{font-size:28px;margin-bottom:5px;}
+.svc-lbl{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+.svc.on .svc-lbl{color:var(--blue);}
+
+/* form card */
+.fcard{background:var(--s2);border:1px solid var(--border);border-radius:18px;
+  padding:20px;margin-bottom:16px;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fcard-title{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;}
+.fcard-title span{color:var(--blue);}
+.f{margin-bottom:13px;}
+.f label{display:block;font-size:11px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.f input,.f select{width:100%;background:var(--s1);border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 13px;color:var(--text);font-family:inherit;font-size:15px;outline:none;transition:.2s;
+  -webkit-appearance:none;appearance:none;}
+.f input:focus,.f select:focus{border-color:var(--blue);}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;}
+.f select option{background:#16162a;}
+
+/* ── PLAN CARDS ── */
+.plans-wrap{margin-top:10px;}
+.plans-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:8px;}
+.plan-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.pf-btn{background:var(--s1);border:1.5px solid var(--border);border-radius:7px;
+  padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted2);transition:.15s;}
+.pf-btn.on{border-color:var(--blue);color:var(--blue);background:rgba(79,142,247,.08);}
+.plan-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;
+  padding-right:2px;}
+.plan-list::-webkit-scrollbar{width:4px;}
+.plan-list::-webkit-scrollbar-track{background:var(--s1);border-radius:2px;}
+.plan-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.plan-card{background:var(--s1);border:1.5px solid var(--border);border-radius:12px;
+  padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;}
+.plan-card:hover{border-color:rgba(79,142,247,.4);background:rgba(79,142,247,.04);}
+.plan-card.sel{border-color:var(--blue);background:rgba(79,142,247,.08);}
+.plan-card:active{transform:scale(.98);}
+.plan-left{flex:1;min-width:0;}
+.plan-name{font-size:13px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plan-desc{font-size:11px;color:var(--muted2);line-height:1.5;}
+.plan-validity{font-size:10px;color:var(--green);font-weight:600;margin-top:3px;}
+.plan-badge{font-size:9px;background:rgba(155,109,255,.15);color:var(--purple);
+  border-radius:4px;padding:2px 6px;font-weight:700;margin-left:6px;vertical-align:middle;}
+.plan-right{text-align:right;flex-shrink:0;}
+.plan-price{font-family:'Clash Display',sans-serif;font-size:18px;font-weight:700;color:var(--text);}
+.plan-price span{font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;}
+.plan-sel-ico{font-size:16px;color:var(--blue);display:none;}
+.plan-card.sel .plan-sel-ico{display:block;}
+.plan-card.sel .plan-price{color:var(--blue);}
+.no-plans{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
+
+/* selected plan summary */
+.sel-plan-summary{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);
+  border-radius:10px;padding:10px 13px;margin-top:10px;font-size:12px;
+  display:flex;justify-content:space-between;align-items:center;}
+.sel-plan-summary .sp-name{font-weight:600;color:var(--text);}
+.sel-plan-summary .sp-price{font-family:'Clash Display',sans-serif;font-size:16px;
+  font-weight:700;color:var(--blue);}
+
+/* amount input row */
+.amt-row{display:flex;gap:8px;align-items:center;margin-top:10px;}
+.amt-row input{flex:1;background:var(--s1);border:1.5px solid var(--border);border-radius:10px;
+  padding:11px 13px;color:var(--text);font-family:inherit;font-size:15px;outline:none;transition:.2s;}
+.amt-row input:focus{border-color:var(--blue);}
+.amt-row .or-lbl{font-size:11px;color:var(--muted);white-space:nowrap;}
+
+/* payment */
+.pay-card{background:var(--s2);border:1px solid var(--border);border-radius:18px;padding:20px;}
+.pay-hdg{font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;margin-bottom:13px;}
+.ptabs{display:flex;gap:7px;margin-bottom:16px;}
+.ptab{flex:1;padding:10px;background:var(--s1);border:1.5px solid var(--border);
+  border-radius:10px;cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--muted);transition:.2s;}
+.ptab.on{border-color:var(--blue);color:var(--text);background:rgba(79,142,247,.1);}
+.upi-box{text-align:center;}
+.qr-outer{background:#fff;border-radius:14px;padding:13px;display:inline-block;
+  margin:8px 0 12px;box-shadow:0 0 40px rgba(79,142,247,.2);}
+.qr-fallback{width:170px;height:170px;background:#f5f5f8;border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#444;font-size:11px;text-align:center;padding:14px;line-height:1.6;}
+.upi-strip{background:var(--s1);border:1px dashed rgba(79,142,247,.4);border-radius:10px;
+  padding:10px 13px;margin:4px 0 11px;display:flex;align-items:center;justify-content:space-between;}
+.upi-strip span{font-size:13px;font-weight:600;color:var(--blue);}
+.copy-btn{background:var(--blue);border:none;border-radius:6px;padding:5px 10px;
+  color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.upi-steps{text-align:left;background:var(--s1);border-radius:10px;padding:11px 13px;
+  font-size:12px;color:var(--muted2);line-height:2;}
+.upi-steps strong{color:var(--text);}
+.upload-area{border:2px dashed var(--border2);border-radius:10px;padding:14px;
+  text-align:center;cursor:pointer;transition:.2s;margin-top:11px;}
+.upload-area:hover{border-color:var(--blue);}
+#upload-preview{max-width:100%;border-radius:8px;margin-top:8px;display:none;}
+.rp-summary{background:var(--s1);border-radius:10px;padding:13px;margin-bottom:13px;}
+.rp-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.rp-row.total{font-weight:700;font-size:14px;border-top:1px solid var(--border);margin-top:5px;padding-top:7px;}
+.rp-row.total span:last-child{color:var(--green);}
+.rp-methods{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:13px;}
+.rp-m{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--muted2);}
+.notice{background:rgba(255,140,66,.07);border:1px solid rgba(255,140,66,.2);
+  border-radius:10px;padding:10px 12px;margin-bottom:13px;font-size:11.5px;color:#ffaa70;line-height:1.7;}
+.notice strong{color:var(--orange);}
+.btn-pay{width:100%;padding:15px;border:none;border-radius:12px;cursor:pointer;
+  font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;
+  background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;
+  box-shadow:0 4px 20px rgba(79,142,247,.3);transition:all .2s;margin-top:13px;}
+.btn-pay:hover{transform:translateY(-2px);}
+.btn-pay:active{transform:scale(.97);}
+
+/* overlays */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(10px);z-index:800;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:var(--s2);border:1px solid var(--border2);border-radius:22px;
+  padding:28px 22px;max-width:300px;width:100%;text-align:center;
+  animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+.modal-ico{font-size:50px;margin-bottom:12px;}
+.modal h2{font-family:'Clash Display',sans-serif;font-size:19px;font-weight:700;margin-bottom:7px;}
+.modal p{color:var(--muted2);font-size:13px;line-height:1.7;}
+.modal-id{background:var(--s1);border-radius:8px;padding:7px 11px;margin:10px 0;
+  font-size:11px;color:var(--blue);font-weight:600;letter-spacing:.5px;}
+.btn-close{margin-top:13px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  border:none;border-radius:10px;padding:11px 28px;color:#fff;
+  font-family:'Clash Display',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;}
+
+/* admin login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:var(--s2);border:1px solid var(--border2);border-radius:22px;
+  padding:32px 24px;width:100%;max-width:340px;text-align:center;}
+.login-card h2{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;margin-bottom:5px;}
+.login-card p{color:var(--muted2);font-size:13px;margin-bottom:22px;}
+.btn-login{width:100%;padding:13px;border:none;border-radius:11px;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;
+  font-family:'Clash Display',sans-serif;font-size:15px;font-weight:700;margin-top:5px;}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;}
+
+/* admin panel */
+.admin-wrap{max-width:900px;margin:0 auto;padding:16px 15px 60px;}
+.admin-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 0 18px;}
+.admin-title{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;}
+.admin-title span{color:var(--purple);}
+.btn-logout{background:var(--s2);border:1px solid var(--border2);border-radius:8px;
+  padding:6px 13px;font-size:12px;font-weight:600;color:var(--muted2);cursor:pointer;}
+.admin-tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.atab{padding:8px 18px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:12px;font-weight:700;cursor:pointer;color:var(--muted2);transition:.2s;background:var(--s2);}
+.atab.on{border-color:var(--blue);color:var(--blue);background:rgba(79,142,247,.08);}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px;}
+@media(min-width:480px){.stats{grid-template-columns:repeat(4,1fr);}}
+.stat{background:var(--s2);border:1px solid var(--border);border-radius:13px;padding:14px;}
+.stat-val{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px;}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.fbtn{background:var(--s2);border:1.5px solid var(--border);border-radius:8px;
+  padding:5px 12px;font-size:11px;font-weight:600;color:var(--muted2);cursor:pointer;}
+.fbtn.on{border-color:var(--blue);color:var(--blue);}
+.search-box{background:var(--s1);border:1px solid var(--border);border-radius:8px;
+  padding:6px 11px;color:var(--text);font-family:inherit;font-size:12px;outline:none;width:140px;margin-left:auto;}
+.order-list{display:flex;flex-direction:column;gap:9px;}
+.ocard{background:var(--s2);border:1px solid var(--border);border-radius:13px;padding:15px;}
+.ocard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;gap:8px;}
+.oid{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px;}
+.osvc{display:inline-flex;align-items:center;gap:4px;background:var(--s3);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;}
+.osvc.mobile{color:#4fc3f7;}.osvc.dth{color:#ab47bc;}.osvc.electricity{color:#ffb74d;}
+.oinfo{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;font-size:12px;}
+.okey{color:var(--muted);font-size:10px;}.oval{font-weight:600;}
+.oamt{font-family:'Clash Display',sans-serif;font-size:20px;font-weight:700;color:var(--green);white-space:nowrap;}
+.obot{display:flex;align-items:center;justify-content:space-between;margin-top:11px;
+  padding-top:11px;border-top:1px solid var(--border);gap:7px;flex-wrap:wrap;}
+.sbadge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;}
+.sbadge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.sbadge.pending{background:rgba(255,140,66,.12);color:var(--orange);}
+.sbadge.processing{background:rgba(79,142,247,.12);color:var(--blue);}
+.sbadge.done{background:rgba(34,211,165,.12);color:var(--green);}
+.sbadge.failed{background:rgba(255,92,92,.12);color:var(--red);}
+.oacts{display:flex;gap:5px;flex-wrap:wrap;}
+.abtn{border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;}
+.abtn.proc{background:rgba(79,142,247,.15);color:var(--blue);}
+.abtn.done{background:rgba(34,211,165,.15);color:var(--green);}
+.abtn.fail{background:rgba(255,92,92,.1);color:var(--red);}
+.abtn.del{background:rgba(255,92,92,.07);color:var(--muted);}
+.abtn.ss{background:rgba(155,109,255,.1);color:var(--purple);}
+.pay-badge{font-size:10px;color:var(--muted);background:var(--s3);border-radius:5px;padding:2px 7px;font-weight:600;}
+.cust-list{display:flex;flex-direction:column;gap:9px;}
+.cust-card{background:var(--s2);border:1px solid var(--border);border-radius:13px;
+  padding:14px 16px;display:flex;align-items:center;gap:14px;}
+.cust-av{width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.cust-info{flex:1;}
+.cust-name{font-size:14px;font-weight:700;}
+.cust-num{font-size:12px;color:var(--blue);font-weight:600;}
+.cust-meta{font-size:11px;color:var(--muted2);margin-top:2px;}
+.cust-badge{background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.2);
+  color:var(--green);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-ico{font-size:44px;margin-bottom:10px;}
+.ss-modal{background:var(--s2);border:1px solid var(--border2);border-radius:18px;padding:20px;max-width:400px;width:90%;}
+.ss-modal img{width:100%;border-radius:10px;margin-top:10px;}
+.ss-modal h3{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-bolt">⚡</div>
+  <div class="splash-logo">Fluxq<em>Pay</em></div>
+  <div class="splash-tag">Instant Recharge · Powered by Razorpay</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<div id="offline-badge">📡 Offline</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div class="inst-ico">📲</div>
+  <div class="inst-text"><strong>Install FluxqPay</strong><span>Add to home screen</span></div>
+  <button class="btn-inst" id="btn-inst">Install</button>
+  <button class="btn-inst-x" onclick="dismissInstall()">✕</button>
+</div>
+
+<!-- REGISTER -->
+<div id="view-register" class="hidden">
+  <div class="reg-card">
+    <div class="reg-logo">Fluxq<em>Pay</em></div>
+    <div class="reg-sub">Instant Recharge App</div>
+    <div class="reg-ico">📱</div>
+    <div class="reg-title">Enter Mobile Number</div>
+    <div class="reg-desc">We'll send you a 6-digit OTP to verify your number.</div>
+    <div class="field">
+      <label>Mobile Number</label>
+      <input type="tel" id="reg-mobile" maxlength="10" placeholder="10-digit number" inputmode="numeric"/>
+      <div class="hint">This will be your login ID</div>
+    </div>
+    <button class="btn-main" onclick="sendOTP()">Send OTP →</button>
+    <div class="err-msg hidden" id="reg-err"></div>
+  </div>
+</div>
+
+<!-- OTP VERIFY -->
+<div id="view-otp" class="hidden">
+  <div class="reg-card">
+    <div class="reg-logo">Fluxq<em>Pay</em></div>
+    <div class="reg-sub">Instant Recharge App</div>
+    <div class="reg-ico">🔐</div>
+    <div class="reg-title">Verify OTP</div>
+    <div class="reg-desc">Enter the 6-digit OTP for<br/><strong id="otp-sent-to" style="color:var(--blue)"></strong></div>
+    <div class="otp-row">
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,0)" onkeydown="otpKey(event,0)"/>
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,1)" onkeydown="otpKey(event,1)"/>
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,2)" onkeydown="otpKey(event,2)"/>
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,3)" onkeydown="otpKey(event,3)"/>
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,4)" onkeydown="otpKey(event,4)"/>
+      <input class="otp-box" maxlength="1" inputmode="numeric" oninput="otpInput(this,5)" onkeydown="otpKey(event,5)"/>
+    </div>
+    <div class="otp-demo" id="otp-demo-box">
+      Your OTP is:
+      <strong id="demo-otp-code"></strong>
+    </div>
+    <button class="btn-main" onclick="verifyOTP()" style="margin-top:14px;">Verify & Enter App →</button>
+    <div class="err-msg hidden" id="otp-err"></div>
+    <div class="resend-row">
+      Didn't get it?
+      <span class="resend-lnk" id="resend-lnk" onclick="resendOTP()">Resend OTP</span>
+      <span id="resend-timer" style="display:none"> in <span id="timer-sec">30</span>s</span>
+    </div>
+    <a class="back-lnk" onclick="backToMobile()">← Change number</a>
+  </div>
+</div>
+
+<!-- CUSTOMER APP -->
+<div id="view-customer" class="hidden">
+<div class="wrap">
+  <div class="hdr">
+    <div class="logo">Fluxq<em>Pay</em></div>
+    <div class="hdr-right">
+      <div class="online-dot" id="online-dot"></div>
+      <div class="hdr-lbl" id="online-lbl">Online</div>
+      <div class="admin-btn" onclick="showAdminGate()">⚙ Admin</div>
+    </div>
+  </div>
+
+  <div class="user-chip">
+    <div class="uc-left">
+      <div class="uc-avatar">👤</div>
+      <div>
+        <div class="uc-name" id="u-name">User</div>
+        <div class="uc-num" id="u-num"></div>
+      </div>
+    </div>
+    <button class="btn-lo-u" onclick="logoutUser()">Logout</button>
+  </div>
+
+  <!-- Services -->
+  <div class="svc-row">
+    <div class="svc on" id="svc-mobile" onclick="setSvc('mobile')"><div class="svc-ico">📱</div><div class="svc-lbl">Mobile</div></div>
+    <div class="svc" id="svc-dth" onclick="setSvc('dth')"><div class="svc-ico">📡</div><div class="svc-lbl">DTH</div></div>
+    <div class="svc" id="svc-electricity" onclick="setSvc('electricity')"><div class="svc-ico">⚡</div><div class="svc-lbl">Electricity</div></div>
+  </div>
+
+  <!-- MOBILE FORM -->
+  <div class="fcard" id="form-mobile">
+    <div class="fcard-title">Mobile <span>Recharge</span></div>
+    <div class="f"><label>Mobile Number</label>
+      <input type="tel" id="mob-num" maxlength="10" placeholder="10-digit number" inputmode="numeric"/></div>
+    <div class="f"><label>Operator</label>
+      <select id="mob-op" onchange="renderPlans('mobile')">
+        <option value="">Select Operator</option>
+        <option value="Jio">Jio</option>
+        <option value="Airtel">Airtel</option>
+        <option value="Vi">Vi (Vodafone Idea)</option>
+        <option value="BSNL">BSNL</option>
+      </select>
+    </div>
+    <!-- Plans -->
+    <div class="plans-wrap" id="mobile-plans-wrap" style="display:none;">
+      <div class="plans-label">📋 Select a Plan</div>
+      <div class="plan-filter-row" id="mobile-plan-filters"></div>
+      <div class="plan-list" id="mobile-plan-list"></div>
+      <div class="sel-plan-summary hidden" id="mobile-sel-summary">
+        <div><div class="sp-name" id="mob-sel-name">—</div><div style="font-size:11px;color:var(--muted2)" id="mob-sel-desc">—</div></div>
+        <div class="sp-price" id="mob-sel-price">₹0</div>
+      </div>
+    </div>
+    <div class="amt-row" style="margin-top:12px;">
+      <span class="or-lbl">Amount:</span>
+      <input type="number" id="mob-amt" placeholder="₹ Custom amount" inputmode="numeric" oninput="updateRp();clearPlanSel('mobile')"/>
+    </div>
+  </div>
+
+  <!-- DTH FORM -->
+  <div class="fcard hidden" id="form-dth">
+    <div class="fcard-title">DTH <span>Recharge</span></div>
+    <div class="f"><label>DTH Provider</label>
+      <select id="dth-prov" onchange="renderPlans('dth')">
+        <option value="">Select Provider</option>
+        <option value="Tata Play">Tata Play</option>
+        <option value="Dish TV">Dish TV</option>
+        <option value="Sun Direct">Sun Direct</option>
+        <option value="Airtel DTH">Airtel DTH</option>
+        <option value="d2h">d2h</option>
+      </select>
+    </div>
+    <div class="f"><label>Subscriber / Smart Card ID</label>
+      <input type="text" id="dth-id" placeholder="Enter subscriber ID" inputmode="numeric"/></div>
+    <div class="plans-wrap" id="dth-plans-wrap" style="display:none;">
+      <div class="plans-label">📋 Select a Plan</div>
+      <div class="plan-filter-row" id="dth-plan-filters"></div>
+      <div class="plan-list" id="dth-plan-list"></div>
+      <div class="sel-plan-summary hidden" id="dth-sel-summary">
+        <div><div class="sp-name" id="dth-sel-name">—</div><div style="font-size:11px;color:var(--muted2)" id="dth-sel-desc">—</div></div>
+        <div class="sp-price" id="dth-sel-price">₹0</div>
+      </div>
+    </div>
+    <div class="amt-row" style="margin-top:12px;">
+      <span class="or-lbl">Amount:</span>
+      <input type="number" id="dth-amt" placeholder="₹ Custom amount" inputmode="numeric" oninput="updateRp();clearPlanSel('dth')"/>
+    </div>
+  </div>
+
+  <!-- ELECTRICITY FORM -->
+  <div class="fcard hidden" id="form-electricity">
+    <div class="fcard-title">Electricity <span>Bill</span></div>
+    <div class="f"><label>State / Board</label>
+      <select id="elec-board">
+        <option value="">Select Board</option>
+        <option>MSEDCL (Maharashtra)</option><option>BESCOM (Karnataka)</option>
+        <option>TPDDL (Delhi)</option><option>BSES Rajdhani (Delhi)</option>
+        <option>TNEB (Tamil Nadu)</option><option>WBSEDCL (West Bengal)</option>
+        <option>UPPCL (Uttar Pradesh)</option><option>PSPCL (Punjab)</option>
+      </select>
+    </div>
+    <div class="f"><label>Consumer / CA Number</label>
+      <input type="text" id="elec-con" placeholder="Enter consumer number" inputmode="numeric"/></div>
+    <div class="f"><label>Bill Amount (₹)</label>
+      <input type="number" id="elec-amt" placeholder="Enter bill amount" inputmode="numeric" oninput="updateRp()"/>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+        <div class="pf-btn" onclick="setElecAmt(500)">₹500</div>
+        <div class="pf-btn" onclick="setElecAmt(1000)">₹1000</div>
+        <div class="pf-btn" onclick="setElecAmt(1500)">₹1500</div>
+        <div class="pf-btn" onclick="setElecAmt(2000)">₹2000</div>
+        <div class="pf-btn" onclick="setElecAmt(3000)">₹3000</div>
+        <div class="pf-btn" onclick="setElecAmt(5000)">₹5000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT -->
+  <div class="pay-card">
+    <div class="pay-hdg">💳 Payment Method</div>
+    <div class="ptabs">
+      <div class="ptab on" id="ptab-upi" onclick="setPay('upi')">📲 UPI / QR</div>
+      <div class="ptab" id="ptab-rp" onclick="setPay('razorpay')">🏦 Razorpay</div>
+    </div>
+    <div id="panel-upi" class="upi-box">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Scan with any UPI app</p>
+      <div class="qr-outer">
+        <img id="qr-img" src="" style="width:170px;height:170px;display:none;border-radius:6px;"
+          onerror="this.style.display='none';document.getElementById('qr-fb').style.display='flex'"/>
+        <div id="qr-fb" class="qr-fallback"><div style="font-size:34px;margin-bottom:6px;">🔲</div>
+          <strong>Your UPI QR</strong><br/>Set CONFIG.upiQrImage</div>
+      </div>
+      <div class="upi-strip">
+        <span id="upi-disp">9552443942-2@ybl</span>
+        <button class="copy-btn" onclick="copyUpi()">COPY</button>
+      </div>
+      <div class="upi-steps"><strong>Steps:</strong><br/>1. Open PhonePe / GPay / Paytm<br/>
+        2. Scan QR or send to UPI ID<br/>3. Enter exact amount &amp; pay<br/>4. Upload screenshot below</div>
+      <div class="upload-area" onclick="document.getElementById('ss-in').click()">
+        <input type="file" id="ss-in" accept="image/*" onchange="handleUpload(event)" style="display:none"/>
+        <div style="font-size:22px;margin-bottom:3px;">📸</div>
+        <div style="font-size:12px;color:var(--muted2);" id="upload-lbl">Upload payment screenshot</div>
+        <img id="upload-preview" src="" alt=""/>
+      </div>
+      <button class="btn-pay" onclick="submitOrder('UPI')">✅ Confirm UPI Payment</button>
+    </div>
+    <div id="panel-razorpay" class="hidden">
+      <div class="notice"><strong>⚙ Setup:</strong> Add your Razorpay Key ID in CONFIG after creating account at razorpay.com</div>
+      <div class="rp-summary">
+        <div class="rp-row"><span>Recharge Amount</span><span id="rp-base">₹0</span></div>
+        <div class="rp-row"><span>Platform Fee</span><span>₹0</span></div>
+        <div class="rp-row total"><span>Total Payable</span><span id="rp-total">₹0</span></div>
+      </div>
+      <div class="rp-methods">
+        <span class="rp-m">💳 Cards</span><span class="rp-m">📲 UPI</span>
+        <span class="rp-m">🏦 Net Banking</span><span class="rp-m">👛 Wallets</span>
+      </div>
+      <button class="btn-pay" onclick="openRazorpay()">🚀 Pay via Razorpay</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="view-login" class="hidden">
+<div class="login-wrap">
+  <div class="login-card">
+    <div style="font-size:38px;margin-bottom:10px;">🔐</div>
+    <h2>Admin Login</h2><p>Order management panel</p>
+    <div class="field"><label>Username</label><input type="text" id="l-user" placeholder="admin"/></div>
+    <div class="field"><label>Password</label><input type="password" id="l-pass" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="btn-login" onclick="doLogin()">Sign In →</button>
+    <div class="login-err hidden" id="l-err">❌ Invalid credentials</div>
+    <a class="back-lnk" onclick="showCustomer()">← Back to app</a>
+  </div>
+</div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="view-admin" class="hidden">
+<div class="admin-wrap">
+  <div class="admin-hdr">
+    <div class="admin-title">Admin <span>Panel</span></div>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+  <div class="admin-tabs">
+    <div class="atab on" id="atab-orders" onclick="setAdminTab('orders')">📋 Orders</div>
+    <div class="atab" id="atab-customers" onclick="setAdminTab('customers')">👥 Customers</div>
+  </div>
+  <div id="admin-orders">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="st-tot" style="color:var(--blue)">0</div><div class="stat-lbl">Total Orders</div></div>
+      <div class="stat"><div class="stat-val" id="st-pend" style="color:var(--orange)">0</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat"><div class="stat-val" id="st-done" style="color:var(--green)">0</div><div class="stat-lbl">Completed</div></div>
+      <div class="stat"><div class="stat-val" id="st-rev" style="color:var(--purple)">₹0</div><div class="stat-lbl">Total Amount</div></div>
+    </div>
+    <div class="filters">
+      <button class="fbtn on" id="f-all" onclick="setFilter('all')">All</button>
+      <button class="fbtn" id="f-pending" onclick="setFilter('pending')">⏳ Pending</button>
+      <button class="fbtn" id="f-processing" onclick="setFilter('processing')">🔄 Processing</button>
+      <button class="fbtn" id="f-done" onclick="setFilter('done')">✅ Done</button>
+      <button class="fbtn" id="f-failed" onclick="setFilter('failed')">❌ Failed</button>
+      <input type="text" class="search-box" id="srch" placeholder="🔍 Search…" oninput="renderOrders()"/>
+    </div>
+    <div class="order-list" id="order-list"></div>
+  </div>
+  <div id="admin-customers" class="hidden">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="st-ct" style="color:var(--blue)">0</div><div class="stat-lbl">Registered</div></div>
+      <div class="stat"><div class="stat-val" id="st-ctd" style="color:var(--green)">0</div><div class="stat-lbl">Today</div></div>
+    </div>
+    <div class="filters">
+      <input type="text" class="search-box" id="cust-srch" placeholder="🔍 Search…" oninput="renderCustomers()" style="margin-left:0;width:200px;"/>
+      <button class="fbtn" onclick="clearCustomers()" style="color:var(--red);margin-left:auto;">🗑 Clear All</button>
+    </div>
+    <div class="cust-list" id="cust-list"></div>
+  </div>
+</div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay" id="ov-success">
+  <div class="modal">
+    <div class="modal-ico">🎉</div><h2>Order Placed!</h2>
+    <div class="modal-id" id="m-oid">ORD-000000</div>
+    <p id="m-msg"></p>
+    <button class="btn-close" onclick="closeModal()">Done</button>
+  </div>
+</div>
+
+<!-- SCREENSHOT MODAL -->
+<div class="overlay" id="ov-ss" onclick="this.classList.remove('open')">
+  <div class="ss-modal" onclick="event.stopPropagation()">
+    <h3>📸 Payment Screenshot</h3>
+    <img id="ss-modal-img" src="" alt=""/>
+    <button class="btn-close" onclick="document.getElementById('ov-ss').classList.remove('open')" style="margin-top:12px;">Close</button>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// ═══════════════════════════════
+//  ⚙️ CONFIG — EDIT THESE
+// ═══════════════════════════════
+const CONFIG = {
+  upiId:         "9552443942-2@ybl",
+  upiName:       "FluxqPay",
+  upiQrImage:    "",
+  razorpayKeyId: "rzp_test_XXXXXX",
+  adminUser:     "admin",
+  adminPass:     "admin123",
+};
+
+// ═══════════════════════════════
+//  📋 PLANS DATABASE
+// ═══════════════════════════════
+const PLANS = {
+  mobile: {
+    Jio: [
+      {name:"Basic",    price:99,  validity:"28 days", desc:"2GB/day data, Unlimited calls, 100 SMS/day", cat:"Popular"},
+      {name:"Smart",    price:149, validity:"24 days", desc:"1.5GB/day data, Unlimited calls, JioTV + JioCinema", cat:"Popular"},
+      {name:"Value",    price:179, validity:"28 days", desc:"2GB/day data, Unlimited calls, Disney+Hotstar Mobile", cat:"Popular"},
+      {name:"All-in-1", price:239, validity:"28 days", desc:"1.5GB/day + 6GB extra, Unlimited calls, JioApps", cat:"Popular", badge:"🔥 Best"},
+      {name:"Premium",  price:299, validity:"28 days", desc:"2GB/day data, Unlimited calls, All JioApps + OTT", cat:"Unlimited", badge:"⭐ Top"},
+      {name:"Value+",   price:349, validity:"56 days", desc:"1.5GB/day data, Unlimited calls, 2 months plan", cat:"Long Term"},
+      {name:"Annual",   price:399, validity:"84 days", desc:"2GB/day data, Unlimited calls, 3 months pack", cat:"Long Term"},
+      {name:"Max",      price:599, validity:"84 days", desc:"2GB/day + Extra data, Unlimited calls, All OTT", cat:"Long Term", badge:"💎 Max"},
+      {name:"Ultra",    price:799, validity:"84 days", desc:"3GB/day data, Unlimited calls, All JioApps + OTT", cat:"Long Term"},
+      {name:"Annual+",  price:999, validity:"365 days",desc:"2GB/day data, Unlimited calls, Full year plan", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    Airtel: [
+      {name:"Mini",     price:99,  validity:"28 days", desc:"1GB data, Unlimited calls, 300 SMS", cat:"Popular"},
+      {name:"Smart",    price:179, validity:"28 days", desc:"1.5GB/day data, Unlimited calls, Airtel Thanks", cat:"Popular"},
+      {name:"Xtra",     price:199, validity:"28 days", desc:"2GB/day data, Unlimited calls, Disney+Hotstar", cat:"Popular", badge:"🔥 Best"},
+      {name:"Value",    price:239, validity:"28 days", desc:"1.5GB/day + 10GB extra, Unlimited calls, 6 OTT", cat:"Unlimited"},
+      {name:"Premium",  price:299, validity:"28 days", desc:"2GB/day data, Unlimited calls, Amazon Prime + 6 OTTs", cat:"Unlimited", badge:"⭐ Top"},
+      {name:"Smart XL", price:359, validity:"56 days", desc:"1.5GB/day data, Unlimited calls, 2 months", cat:"Long Term"},
+      {name:"Value XL", price:449, validity:"84 days", desc:"1.5GB/day data, Unlimited calls, 3 months", cat:"Long Term"},
+      {name:"Max",      price:599, validity:"84 days", desc:"2GB/day data, Unlimited calls, All OTTs, Airtel Black", cat:"Long Term", badge:"💎 Max"},
+      {name:"Annual",   price:839, validity:"365 days",desc:"1.5GB/day data, Unlimited calls, Full year", cat:"Annual"},
+      {name:"Annual+",  price:1099,validity:"365 days",desc:"2GB/day data, Unlimited calls, All OTTs, Annual", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    Vi: [
+      {name:"Basic",    price:99,  validity:"28 days", desc:"1GB data, Unlimited calls, 100 SMS/day", cat:"Popular"},
+      {name:"Value",    price:179, validity:"28 days", desc:"1.5GB/day data, Unlimited calls, Vi Movies & TV", cat:"Popular"},
+      {name:"Smart",    price:209, validity:"28 days", desc:"2GB/day data, Unlimited calls, Weekend Data Rollover", cat:"Popular", badge:"🔥 Best"},
+      {name:"Premium",  price:269, validity:"28 days", desc:"2GB/day data, Unlimited calls, Vi Hero Unlimited", cat:"Unlimited", badge:"⭐ Top"},
+      {name:"Unlimited",price:299, validity:"28 days", desc:"1.5GB/day + unlimited weekend, Unlimited calls", cat:"Unlimited"},
+      {name:"Long 56",  price:379, validity:"56 days", desc:"1.5GB/day data, Unlimited calls, 2 months", cat:"Long Term"},
+      {name:"Long 84",  price:479, validity:"84 days", desc:"1.5GB/day data, Unlimited calls, 3 months", cat:"Long Term"},
+      {name:"Max",      price:599, validity:"84 days", desc:"2GB/day, Unlimited calls, All benefits, 84 days", cat:"Long Term", badge:"💎 Max"},
+      {name:"Annual",   price:719, validity:"365 days",desc:"1.5GB/day data, Unlimited calls, Full year", cat:"Annual"},
+      {name:"Annual+",  price:999, validity:"365 days",desc:"2GB/day, Unlimited calls, Vi Hero Unlimited, Annual", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    BSNL: [
+      {name:"STV 47",   price:47,  validity:"18 days", desc:"1GB/day data, Unlimited calls, 100 SMS/day", cat:"Popular"},
+      {name:"STV 94",   price:94,  validity:"24 days", desc:"2GB/day data, Unlimited calls, BSNL PRBTUNES", cat:"Popular"},
+      {name:"Value",    price:107, validity:"30 days", desc:"1GB/day data, Unlimited calls, 30 days", cat:"Popular", badge:"🔥 Best"},
+      {name:"Smart",    price:187, validity:"54 days", desc:"2GB/day data, Unlimited calls, 54 days", cat:"Long Term"},
+      {name:"Premium",  price:197, validity:"30 days", desc:"2GB/day + extra data, Unlimited calls", cat:"Unlimited", badge:"⭐ Top"},
+      {name:"Long 90",  price:247, validity:"90 days", desc:"1GB/day data, Unlimited calls, 3 months", cat:"Long Term"},
+      {name:"Value 84", price:319, validity:"84 days", desc:"2GB/day data, Unlimited calls, 84 days", cat:"Long Term"},
+      {name:"Max",      price:397, validity:"90 days", desc:"3GB/day data, Unlimited calls, 90 days", cat:"Long Term", badge:"💎 Max"},
+      {name:"Annual",   price:599, validity:"365 days",desc:"2GB/day data, Unlimited calls, Full year", cat:"Annual"},
+      {name:"Annual+",  price:797, validity:"365 days",desc:"3GB/day data, Unlimited calls, Annual best", cat:"Annual", badge:"🏆 Annual"},
+    ],
+  },
+  dth: {
+    "Tata Play": [
+      {name:"Basic SD",     price:149, validity:"30 days", desc:"150+ SD channels including news & entertainment", cat:"Basic"},
+      {name:"Classic SD",   price:199, validity:"30 days", desc:"200+ SD channels, sports & movies", cat:"Popular", badge:"🔥 Popular"},
+      {name:"Standard HD",  price:249, validity:"30 days", desc:"250+ channels with 50+ HD channels", cat:"Popular"},
+      {name:"Premium HD",   price:349, validity:"30 days", desc:"300+ channels, 80+ HD, sports pack included", cat:"Premium", badge:"⭐ Best"},
+      {name:"Sports HD",    price:449, validity:"30 days", desc:"All HD channels + Star Sports + Sony Sports", cat:"Premium"},
+      {name:"Grand HD",     price:549, validity:"30 days", desc:"350+ channels, 100+ HD, all sports & movies", cat:"Premium", badge:"💎 Max"},
+      {name:"Annual Basic", price:1499,validity:"365 days",desc:"150+ SD channels, 1 year subscription", cat:"Annual"},
+      {name:"Annual HD",    price:2499,validity:"365 days",desc:"250+ channels, 50+ HD, full year", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    "Dish TV": [
+      {name:"Gold",         price:149, validity:"30 days", desc:"200+ channels, SD quality", cat:"Basic", badge:"🔥 Popular"},
+      {name:"Titanium",     price:249, validity:"30 days", desc:"250+ channels including HD", cat:"Popular"},
+      {name:"Platinum",     price:349, validity:"30 days", desc:"300+ channels, HD pack included", cat:"Premium", badge:"⭐ Best"},
+      {name:"Diamond",      price:449, validity:"30 days", desc:"350+ channels, premium HD + sports", cat:"Premium"},
+      {name:"Diamond Plus", price:549, validity:"30 days", desc:"400+ channels, all HD + OTT bundle", cat:"Premium", badge:"💎 Max"},
+      {name:"Annual Gold",  price:1599,validity:"365 days",desc:"200+ channels, 1 year pack", cat:"Annual"},
+      {name:"Annual Plat",  price:2999,validity:"365 days",desc:"300+ HD channels, full year", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    "Sun Direct": [
+      {name:"Value SD",     price:99,  validity:"30 days", desc:"100+ SD channels, regional focus", cat:"Basic", badge:"🔥 Popular"},
+      {name:"Smart",        price:149, validity:"30 days", desc:"175+ channels, SD + some HD", cat:"Basic"},
+      {name:"Premium SD",   price:199, validity:"30 days", desc:"225+ channels with sports", cat:"Popular"},
+      {name:"HD Pack",      price:249, validity:"30 days", desc:"200+ channels + 30 HD channels", cat:"Popular", badge:"⭐ Best"},
+      {name:"Premium HD",   price:349, validity:"30 days", desc:"275+ channels, 60+ HD channels", cat:"Premium"},
+      {name:"Ultra HD",     price:449, validity:"30 days", desc:"300+ channels, 80+ HD + sports", cat:"Premium", badge:"💎 Max"},
+      {name:"Annual",       price:1199,validity:"365 days",desc:"175+ channels, 1 year pack", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    "Airtel DTH": [
+      {name:"Value HD",     price:199, validity:"30 days", desc:"200+ channels including HD", cat:"Popular", badge:"🔥 Popular"},
+      {name:"Entertainment",price:299, validity:"30 days", desc:"270+ channels, HD + Airtel Xstream", cat:"Popular"},
+      {name:"Premium HD",   price:399, validity:"30 days", desc:"300+ channels, 80+ HD, sports", cat:"Premium", badge:"⭐ Best"},
+      {name:"Mega HD",      price:499, validity:"30 days", desc:"350+ channels, all HD + OTT", cat:"Premium"},
+      {name:"Ultra HD",     price:599, validity:"30 days", desc:"400+ channels, 4K ready, all OTT", cat:"Premium", badge:"💎 Max"},
+      {name:"Annual",       price:2399,validity:"365 days",desc:"200+ HD channels, 1 year", cat:"Annual", badge:"🏆 Annual"},
+    ],
+    "d2h": [
+      {name:"Bronze",       price:149, validity:"30 days", desc:"175+ SD channels", cat:"Basic", badge:"🔥 Popular"},
+      {name:"Silver",       price:249, validity:"30 days", desc:"250+ channels with HD", cat:"Popular"},
+      {name:"Gold",         price:349, validity:"30 days", desc:"300+ channels, premium HD", cat:"Premium", badge:"⭐ Best"},
+      {name:"Platinum",     price:449, validity:"30 days", desc:"350+ channels, all HD + sports", cat:"Premium"},
+      {name:"Diamond",      price:549, validity:"30 days", desc:"400+ channels, ultra HD pack", cat:"Premium", badge:"💎 Max"},
+      {name:"Annual Gold",  price:1999,validity:"365 days",desc:"300+ HD channels, full year", cat:"Annual", badge:"🏆 Annual"},
+    ],
+  }
+};
+
+// ═══════════════════════════════
+//  PWA
+// ═══════════════════════════════
+if('serviceWorker' in navigator){
+  const sw=`const C='fq-v1';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll([self.location.href])));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match(self.location.href))));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  if(!localStorage.getItem('fq_inst_dismissed'))
+    document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('btn-inst').addEventListener('click',async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();await deferredPrompt.userChoice;
+  deferredPrompt=null;document.getElementById('install-banner').classList.remove('show');
+});
+function dismissInstall(){document.getElementById('install-banner').classList.remove('show');localStorage.setItem('fq_inst_dismissed','1');}
+
+// online/offline
+function setOnline(on){
+  document.getElementById('online-dot').style.cssText=on?'background:var(--green);box-shadow:0 0 6px var(--green)':'background:var(--red)';
+  document.getElementById('online-lbl').textContent=on?'Online':'Offline';
+  document.getElementById('offline-badge').classList.toggle('show',!on);
+}
+window.addEventListener('online',()=>setOnline(true));
+window.addEventListener('offline',()=>setOnline(false));
+setOnline(navigator.onLine);
+
+// splash
+window.addEventListener('load',()=>setTimeout(()=>{
+  document.getElementById('splash').classList.add('hide');initApp();
+},1900));
+
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+let orders=JSON.parse(localStorage.getItem('fq_orders')||'[]');
+let customers=JSON.parse(localStorage.getItem('fq_customers')||'[]');
+let curSvc='mobile',curPay='upi',curFilter='all',uploadedSS=null;
+let generatedOTP='',otpMobile='',resendTimer=null;
+let selectedPlan={mobile:null,dth:null};
+let planCatFilter={mobile:'Popular',dth:'Popular'};
+
+// apply config
+document.getElementById('upi-disp').textContent=CONFIG.upiId;
+if(CONFIG.upiQrImage){
+  document.getElementById('qr-img').src=CONFIG.upiQrImage;
+  document.getElementById('qr-img').style.display='block';
+  document.getElementById('qr-fb').style.display='none';
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+function initApp(){
+  const saved=localStorage.getItem('fq_user');
+  saved?showCustomerApp(JSON.parse(saved)):showView('register');
+}
+function showView(v){
+  ['register','otp','customer','login','admin'].forEach(x=>
+    document.getElementById('view-'+x).classList.add('hidden'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+}
+
+// ═══════════════════════════════
+//  OTP
+// ═══════════════════════════════
+function sendOTP(){
+  const mob=document.getElementById('reg-mobile').value.trim();
+  if(!/^\d{10}$/.test(mob)){showRegErr('Enter valid 10-digit mobile number.');return;}
+  otpMobile=mob;
+  generatedOTP=String(Math.floor(100000+Math.random()*900000));
+  document.getElementById('otp-sent-to').textContent='+91 '+mob;
+  document.getElementById('demo-otp-code').textContent=generatedOTP;
+  document.querySelectorAll('.otp-box').forEach(b=>b.value='');
+  document.getElementById('otp-err').classList.add('hidden');
+  showView('otp');
+  startResendTimer();
+  setTimeout(()=>document.querySelectorAll('.otp-box')[0].focus(),300);
+}
+function otpInput(el,idx){
+  el.value=el.value.replace(/\D/g,'');
+  if(el.value&&idx<5)document.querySelectorAll('.otp-box')[idx+1].focus();
+  const all=[...document.querySelectorAll('.otp-box')].map(b=>b.value).join('');
+  if(all.length===6)setTimeout(verifyOTP,200);
+}
+function otpKey(e,idx){
+  if(e.key==='Backspace'&&!e.target.value&&idx>0)
+    document.querySelectorAll('.otp-box')[idx-1].focus();
+}
+function verifyOTP(){
+  const entered=[...document.querySelectorAll('.otp-box')].map(b=>b.value).join('');
+  const err=document.getElementById('otp-err');
+  if(entered.length<6){err.textContent='Enter all 6 digits.';err.classList.remove('hidden');return;}
+  if(entered!==generatedOTP){
+    err.textContent='❌ Wrong OTP. Try again.';err.classList.remove('hidden');
+    document.querySelectorAll('.otp-box').forEach(b=>b.value='');
+    document.querySelectorAll('.otp-box')[0].focus();return;
+  }
+  err.classList.add('hidden');
+  const user={mobile:otpMobile,joinedAt:new Date().toISOString()};
+  localStorage.setItem('fq_user',JSON.stringify(user));
+  if(!customers.find(c=>c.mobile===otpMobile)){
+    customers.push({...user,ordersCount:0});saveCustomers();
+  }
+  showCustomerApp(user);
+}
+function resendOTP(){
+  if(document.getElementById('resend-lnk').classList.contains('off'))return;
+  generatedOTP=String(Math.floor(100000+Math.random()*900000));
+  document.getElementById('demo-otp-code').textContent=generatedOTP;
+  document.querySelectorAll('.otp-box').forEach(b=>b.value='');
+  document.getElementById('otp-err').classList.add('hidden');
+  startResendTimer();
+}
+function startResendTimer(){
+  let sec=30;
+  const lnk=document.getElementById('resend-lnk');
+  const timerEl=document.getElementById('resend-timer');
+  const secEl=document.getElementById('timer-sec');
+  lnk.classList.add('off');timerEl.style.display='inline';
+  clearInterval(resendTimer);
+  resendTimer=setInterval(()=>{
+    sec--;secEl.textContent=sec;
+    if(sec<=0){clearInterval(resendTimer);lnk.classList.remove('off');timerEl.style.display='none';}
+  },1000);
+}
+function backToMobile(){clearInterval(resendTimer);showView('register');}
+function showRegErr(msg){const el=document.getElementById('reg-err');el.textContent=msg;el.classList.remove('hidden');}
+
+// ═══════════════════════════════
+//  CUSTOMER APP
+// ═══════════════════════════════
+function showCustomerApp(user){
+  document.getElementById('u-name').textContent='+91 '+user.mobile.slice(0,5)+'XXXXX';
+  document.getElementById('u-num').textContent='+91 '+user.mobile;
+  showView('customer');
+}
+function logoutUser(){
+  if(confirm('Logout from FluxqPay?')){localStorage.removeItem('fq_user');showView('register');}
+}
+function showCustomer(){
+  const s=localStorage.getItem('fq_user');
+  s?showCustomerApp(JSON.parse(s)):showView('register');
+}
+
+// ═══════════════════════════════
+//  PLANS
+// ═══════════════════════════════
+function renderPlans(svcType){
+  const sel = svcType==='mobile'
+    ? document.getElementById('mob-op').value
+    : document.getElementById('dth-prov').value;
+
+  const wrap=document.getElementById(svcType+'-plans-wrap');
+  const listEl=document.getElementById(svcType+'-plan-list');
+  const filtersEl=document.getElementById(svcType+'-plan-filters');
+  const summaryEl=document.getElementById(svcType+'-sel-summary');
+
+  if(!sel||!PLANS[svcType]||!PLANS[svcType][sel]){
+    wrap.style.display='none';return;
+  }
+
+  // reset
+  selectedPlan[svcType]=null;
+  summaryEl.classList.add('hidden');
+  if(svcType==='mobile') document.getElementById('mob-amt').value='';
+  else document.getElementById('dth-amt').value='';
+  updateRp();
+
+  const plans=PLANS[svcType][sel];
+  const cats=[...new Set(plans.map(p=>p.cat))];
+  if(!cats.includes(planCatFilter[svcType])) planCatFilter[svcType]=cats[0];
+
+  // render filters
+  filtersEl.innerHTML=cats.map(c=>
+    `<div class="pf-btn${planCatFilter[svcType]===c?' on':''}" onclick="setPlanCat('${svcType}','${c}')">${c}</div>`
+  ).join('');
+
+  // render plan list
+  renderPlanList(svcType,plans);
+  wrap.style.display='block';
+}
+
+function renderPlanList(svcType,plans){
+  const cat=planCatFilter[svcType];
+  const filtered=plans.filter(p=>p.cat===cat);
+  const listEl=document.getElementById(svcType+'-plan-list');
+  if(!filtered.length){listEl.innerHTML=`<div class="no-plans">No plans in this category.</div>`;return;}
+  const selPlan=selectedPlan[svcType];
+  listEl.innerHTML=filtered.map((p,i)=>{
+    const isSel=selPlan&&selPlan.name===p.name&&selPlan.price===p.price;
+    return `<div class="plan-card${isSel?' sel':''}" onclick="selectPlan('${svcType}',${plans.indexOf(p)})">
+      <div class="plan-left">
+        <div class="plan-name">${p.name}${p.badge?`<span class="plan-badge">${p.badge}</span>`:''}</div>
+        <div class="plan-desc">${p.desc}</div>
+        <div class="plan-validity">📅 ${p.validity}</div>
+      </div>
+      <div class="plan-right">
+        <div class="plan-price">₹${p.price}<br/><span>/${p.validity.split(' ').slice(1).join(' ')}</span></div>
+        <div class="plan-sel-ico">✓</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setPlanCat(svcType,cat){
+  planCatFilter[svcType]=cat;
+  const sel=svcType==='mobile'?document.getElementById('mob-op').value:document.getElementById('dth-prov').value;
+  if(!sel||!PLANS[svcType]||!PLANS[svcType][sel])return;
+  const plans=PLANS[svcType][sel];
+  // update filter buttons
+  document.getElementById(svcType+'-plan-filters').querySelectorAll('.pf-btn').forEach((b,i)=>{
+    b.classList.toggle('on',b.textContent===cat);
+  });
+  renderPlanList(svcType,plans);
+}
+
+function selectPlan(svcType,idx){
+  const sel=svcType==='mobile'?document.getElementById('mob-op').value:document.getElementById('dth-prov').value;
+  const plans=PLANS[svcType][sel];
+  const plan=plans[idx];
+  selectedPlan[svcType]=plan;
+  // set amount input
+  const amtId=svcType==='mobile'?'mob-amt':'dth-amt';
+  document.getElementById(amtId).value=plan.price;
+  // show summary
+  const summaryEl=document.getElementById(svcType+'-sel-summary');
+  document.getElementById(svcType+'-sel-name').textContent=plan.name+(plan.badge?' '+plan.badge:'');
+  document.getElementById(svcType+'-sel-desc').textContent=plan.validity+' · '+plan.desc.substring(0,40)+'…';
+  document.getElementById(svcType+'-sel-price').textContent='₹'+plan.price;
+  summaryEl.classList.remove('hidden');
+  updateRp();
+  // re-render to show tick
+  renderPlanList(svcType,plans);
+}
+
+function clearPlanSel(svcType){
+  selectedPlan[svcType]=null;
+  document.getElementById(svcType+'-sel-summary')?.classList.add('hidden');
+}
+
+function setElecAmt(v){
+  document.getElementById('elec-amt').value=v;
+  document.querySelectorAll('[onclick^="setElecAmt"]').forEach(el=>
+    el.classList.toggle('on',el.textContent==='₹'+v));
+  updateRp();
+}
+
+// ═══════════════════════════════
+//  SERVICE / PAYMENT
+// ═══════════════════════════════
+function setSvc(s){
+  curSvc=s;
+  ['mobile','dth','electricity'].forEach(id=>{
+    document.getElementById('form-'+id).classList.toggle('hidden',id!==s);
+    document.getElementById('svc-'+id).classList.toggle('on',id===s);
+  });updateRp();
+}
+
+function getAmt(){
+  const m={mobile:'mob-amt',dth:'dth-amt',electricity:'elec-amt'};
+  return parseFloat(document.getElementById(m[curSvc]).value)||0;
+}
+function updateRp(){
+  const a=getAmt();
+  document.getElementById('rp-base').textContent='₹'+a;
+  document.getElementById('rp-total').textContent='₹'+a;
+}
+function setPay(tab){
+  curPay=tab;
+  document.getElementById('ptab-upi').classList.toggle('on',tab==='upi');
+  document.getElementById('ptab-rp').classList.toggle('on',tab==='razorpay');
+  document.getElementById('panel-upi').classList.toggle('hidden',tab!=='upi');
+  document.getElementById('panel-razorpay').classList.toggle('hidden',tab!=='razorpay');
+}
+function copyUpi(){
+  navigator.clipboard.writeText(CONFIG.upiId).then(()=>{
+    const b=document.querySelector('.copy-btn');b.textContent='COPIED!';
+    setTimeout(()=>b.textContent='COPY',2000);
+  });
+}
+function handleUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=x=>{uploadedSS=x.result;
+    document.getElementById('upload-preview').src=x.result;
+    document.getElementById('upload-preview').style.display='block';
+    document.getElementById('upload-lbl').textContent='✅ Screenshot attached';};
+  r.readAsDataURL(file);
+}
+
+// ═══════════════════════════════
+//  VALIDATE & SUBMIT
+// ═══════════════════════════════
+function validate(){
+  if(!getAmt()){alert('Please select a plan or enter an amount.');return false;}
+  if(curSvc==='mobile'){
+    const n=document.getElementById('mob-num').value;
+    if(!n||n.length!==10||!/^\d+$/.test(n)){alert('Enter valid 10-digit mobile number.');return false;}
+    if(!document.getElementById('mob-op').value){alert('Select operator.');return false;}
+  }
+  if(curSvc==='dth'){
+    if(!document.getElementById('dth-prov').value){alert('Select DTH provider.');return false;}
+    if(!document.getElementById('dth-id').value){alert('Enter subscriber ID.');return false;}
+  }
+  if(curSvc==='electricity'){
+    if(!document.getElementById('elec-board').value){alert('Select electricity board.');return false;}
+    if(!document.getElementById('elec-con').value){alert('Enter consumer number.');return false;}
+  }
+  return true;
+}
+
+function getFormData(){
+  const user=JSON.parse(localStorage.getItem('fq_user')||'{}');
+  const plan=selectedPlan[curSvc];
+  const planInfo=plan?`${plan.name} · ${plan.validity}`:'Custom';
+  if(curSvc==='mobile')return{label:document.getElementById('mob-num').value,
+    extra:document.getElementById('mob-op').value,amount:getAmt(),plan:planInfo,userMobile:user.mobile||''};
+  if(curSvc==='dth')return{label:document.getElementById('dth-id').value,
+    extra:document.getElementById('dth-prov').value,amount:getAmt(),plan:planInfo,userMobile:user.mobile||''};
+  return{label:document.getElementById('elec-con').value,
+    extra:document.getElementById('elec-board').value,amount:getAmt(),plan:'Bill Payment',userMobile:user.mobile||''};
+}
+
+function submitOrder(method,payId){
+  if(!validate())return;
+  const d=getFormData();
+  const order={id:'ORD-'+Date.now(),service:curSvc,label:d.label,extra:d.extra,
+    amount:d.amount,plan:d.plan,method,paymentId:payId||'',status:'pending',
+    screenshot:uploadedSS||null,time:new Date().toISOString(),userMobile:d.userMobile};
+  orders.unshift(order);saveOrders();
+  const c=customers.find(x=>x.mobile===d.userMobile);
+  if(c){c.ordersCount=(c.ordersCount||0)+1;saveCustomers();}
+  showSuccessModal(order);resetForm();
+}
+
+function resetForm(){
+  ['mob-num','mob-amt','dth-id','dth-amt','elec-con','elec-amt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mob-op','dth-prov','elec-board'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  ['mobile-plans-wrap','dth-plans-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  selectedPlan={mobile:null,dth:null};
+  uploadedSS=null;
+  document.getElementById('upload-preview').style.display='none';
+  document.getElementById('upload-lbl').textContent='Upload payment screenshot';
+  document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('on'));
+  updateRp();
+}
+
+function openRazorpay(){
+  if(!validate())return;
+  const d=getFormData();
+  new Razorpay({key:CONFIG.razorpayKeyId,amount:d.amount*100,currency:'INR',
+    name:CONFIG.upiName,description:`${curSvc.toUpperCase()} — ${d.label}`,
+    theme:{color:'#4f8ef7'},handler:r=>submitOrder('Razorpay',r.razorpay_payment_id),prefill:{}
+  }).open();
+}
+
+function showSuccessModal(order){
+  const names={mobile:'Mobile Recharge',dth:'DTH Recharge',electricity:'Electricity Bill'};
+  document.getElementById('m-oid').textContent=order.id;
+  document.getElementById('m-msg').innerHTML=
+    `<strong>${names[order.service]}</strong> — <strong>₹${order.amount}</strong><br/>
+    Plan: ${order.plan}<br/>We'll process it shortly! 📲`;
+  document.getElementById('ov-success').classList.add('open');
+}
+function closeModal(){document.getElementById('ov-success').classList.remove('open');}
+
+// ═══════════════════════════════
+//  ADMIN
+// ═══════════════════════════════
+function showAdminGate(){
+  localStorage.getItem('fq_admin')==='true'?showAdminPanel():showView('login');
+}
+function doLogin(){
+  const u=document.getElementById('l-user').value;
+  const p=document.getElementById('l-pass').value;
+  if(u===CONFIG.adminUser&&p===CONFIG.adminPass){
+    localStorage.setItem('fq_admin','true');showAdminPanel();
+  }else document.getElementById('l-err').classList.remove('hidden');
+}
+function logout(){localStorage.removeItem('fq_admin');showCustomer();}
+function showAdminPanel(){showView('admin');setAdminTab('orders');}
+function setAdminTab(tab){
+  document.getElementById('atab-orders').classList.toggle('on',tab==='orders');
+  document.getElementById('atab-customers').classList.toggle('on',tab==='customers');
+  document.getElementById('admin-orders').classList.toggle('hidden',tab!=='orders');
+  document.getElementById('admin-customers').classList.toggle('hidden',tab!=='customers');
+  tab==='orders'?renderOrders():renderCustomers();
+}
+
+function saveOrders(){localStorage.setItem('fq_orders',JSON.stringify(orders));}
+function saveCustomers(){localStorage.setItem('fq_customers',JSON.stringify(customers));}
+
+function setFilter(f){
+  curFilter=f;
+  ['all','pending','processing','done','failed'].forEach(id=>
+    document.getElementById('f-'+id).classList.toggle('on',id===f));
+  renderOrders();
+}
+
+function renderOrders(){
+  const srch=(document.getElementById('srch')?.value||'').toLowerCase();
+  const filtered=orders.filter(o=>{
+    const mf=curFilter==='all'||o.status===curFilter;
+    const ms=!srch||o.id.toLowerCase().includes(srch)||o.label.toLowerCase().includes(srch)||
+      o.extra.toLowerCase().includes(srch)||(o.userMobile||'').includes(srch);
+    return mf&&ms;
+  });
+  document.getElementById('st-tot').textContent=orders.length;
+  document.getElementById('st-pend').textContent=orders.filter(o=>o.status==='pending').length;
+  document.getElementById('st-done').textContent=orders.filter(o=>o.status==='done').length;
+  document.getElementById('st-rev').textContent='₹'+orders.reduce((s,o)=>s+o.amount,0).toLocaleString('en-IN');
+  const svcIco={mobile:'📱',dth:'📡',electricity:'⚡'};
+  const svcLbl={mobile:'Mobile',dth:'DTH',electricity:'Electricity'};
+  const statusLbl={pending:'Pending',processing:'Processing',done:'Completed',failed:'Failed'};
+  const detailKey={mobile:'Mobile No.',dth:'Subscriber ID',electricity:'Consumer No.'};
+  const extraKey={mobile:'Operator',dth:'Provider',electricity:'Board'};
+  const list=document.getElementById('order-list');
+  if(!filtered.length){list.innerHTML=`<div class="empty"><div class="empty-ico">📭</div><p>No orders found.</p></div>`;return;}
+  list.innerHTML=filtered.map(o=>{
+    const t=new Date(o.time);
+    const ts=t.toLocaleDateString('en-IN')+' '+t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="ocard">
+      <div class="ocard-top">
+        <div><div class="oid">${o.id}</div><div class="osvc ${o.service}">${svcIco[o.service]} ${svcLbl[o.service]}</div></div>
+        <div class="oamt">₹${o.amount}</div>
+      </div>
+      <div class="oinfo">
+        <div><div class="okey">${detailKey[o.service]}</div><div class="oval">${o.label}</div></div>
+        <div><div class="okey">${extraKey[o.service]}</div><div class="oval">${o.extra}</div></div>
+        <div><div class="okey">Plan</div><div class="oval" style="font-size:11px;color:var(--muted2)">${o.plan||'—'}</div></div>
+        <div><div class="okey">Customer</div><div class="oval" style="color:var(--blue)">+91 ${o.userMobile||'—'}</div></div>
+      </div>
+      <div class="obot">
+        <div><div class="sbadge ${o.status}">${statusLbl[o.status]}</div><span class="pay-badge" style="margin-left:6px">${o.method}</span></div>
+        <div class="oacts">
+          ${o.screenshot?`<button class="abtn ss" onclick="viewSS('${o.id}')">📸</button>`:''}
+          ${o.status==='pending'?`<button class="abtn proc" onclick="updStatus('${o.id}','processing')">🔄</button>`:''}
+          ${o.status!=='done'&&o.status!=='failed'?`<button class="abtn done" onclick="updStatus('${o.id}','done')">✅</button>`:''}
+          ${o.status!=='failed'&&o.status!=='done'?`<button class="abtn fail" onclick="updStatus('${o.id}','failed')">❌</button>`:''}
+          <button class="abtn del" onclick="delOrder('${o.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updStatus(id,s){const o=orders.find(x=>x.id===id);if(o){o.status=s;saveOrders();renderOrders();}}
+function delOrder(id){if(confirm('Delete?')){orders=orders.filter(x=>x.id!==id);saveOrders();renderOrders();}}
+function viewSS(id){const o=orders.find(x=>x.id===id);if(o&&o.screenshot){document.getElementById('ss-modal-img').src=o.screenshot;document.getElementById('ov-ss').classList.add('open');}}
+
+function renderCustomers(){
+  const srch=(document.getElementById('cust-srch')?.value||'').toLowerCase();
+  const filtered=customers.filter(c=>!srch||c.mobile.includes(srch));
+  const today=new Date().toDateString();
+  document.getElementById('st-ct').textContent=customers.length;
+  document.getElementById('st-ctd').textContent=customers.filter(c=>new Date(c.joinedAt).toDateString()===today).length;
+  const list=document.getElementById('cust-list');
+  if(!filtered.length){list.innerHTML=`<div class="empty"><div class="empty-ico">👥</div><p>No customers yet.</p></div>`;return;}
+  list.innerHTML=filtered.map(c=>{
+    const t=new Date(c.joinedAt);
+    const ts=t.toLocaleDateString('en-IN')+' '+t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const custOrders=orders.filter(o=>o.userMobile===c.mobile);
+    const spent=custOrders.reduce((s,o)=>s+o.amount,0);
+    return `<div class="cust-card">
+      <div class="cust-av">👤</div>
+      <div class="cust-info">
+        <div class="cust-name">+91 ${c.mobile}</div>
+        <div class="cust-num">${custOrders.length} orders · ₹${spent.toLocaleString('en-IN')} spent</div>
+        <div class="cust-meta">Joined ${ts}</div>
+      </div>
+      <div class="cust-badge">✓ Verified</div>
+    </div>`;
+  }).join('');
+}
+function clearCustomers(){if(confirm('Delete ALL customers?')){customers=[];saveCustomers();renderCustomers();}}
+</script>
+</body>
+</html>
